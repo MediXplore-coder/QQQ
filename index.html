@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz: Atmungssystem</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e0f7fa;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 95%;
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 90vh;
+    }
+    h2 {
+      color: #004d40;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .frage {
+      flex: 1;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    .antworten {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+    }
+    .antworten button {
+      margin: 8px 0;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #000;
+      background-color: #4dd0e1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .antworten button:hover {
+      background-color: #00bcd4;
+    }
+    .antworten button.correct {
+      background-color: #66bb6a;
+    }
+    .antworten button.wrong {
+      background-color: #ef5350;
+    }
+    .navigation {
+      display: none;
+      margin-top: 20px;
+      justify-content: center;
+    }
+    .navigation button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      background-color: #004d40;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .navigation button:hover {
+      background-color: #00332b;
+    }
+    .ergebnis {
+      display: none;
+      text-align: center;
+      font-size: 22px;
+      color: #004d40;
+      margin-top: 20px;
+    }
+    .level-auswahl {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .level-auswahl button {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background-color: #00796b;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .level-auswahl button:hover {
+      background-color: #004d40;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Quiz: Atmungssystem</h2>
+    <div class="level-auswahl" id="level-auswahl">
+      <button onclick="startQuiz('leicht')">Leicht</button>
+      <button onclick="startQuiz('mittel')">Mittel</button>
+      <button onclick="startQuiz('schwer')">Schwer</button>
+    </div>
+    <div class="frage" id="frage" style="display: none;"></div>
+    <div class="antworten" id="antworten" style="display: none;"></div>
+    <div class="ergebnis" id="ergebnis"></div>
+    <div class="navigation" id="navigation">
+      <button onclick="restart()">Wiederholen</button>
+    </div>
+  </div>
+  <script>
+    const allQuestions = [
+        { question: "Wie viele Lungenflügel hat der Mensch?", answers: ["1", "2", "3", "4"], correct: 1, level: "leicht" },
+        { question: "Was ist die Hauptaufgabe der Bronchien?", answers: ["Gasaustausch", "Transport der Atemluft zu den Alveolen", "Produktion von Surfactant", "Regulation der Herzfrequenz"], correct: 1, level: "leicht" },
+        { question: "Was ist die Hauptfunktion der Trachea?", answers: ["Filterung des Blutes", "Regulation des Blutdrucks", "Leitung der Luft in die Bronchien", "Produktion von Schleim"], correct: 2, level: "mittel" },
+        { question: "Welche Art von Muskelgewebe steuert die Weite der Bronchien?", answers: ["Quergestreifte Muskulatur", "Glatte Muskulatur", "Herzmuskulatur", "Skelettmuskulatur"], correct: 1, level: "mittel" },
+        { question: "Welches Gas wird mit der Ausatmung hauptsächlich ausgeschieden?", answers: ["Sauerstoff", "Kohlendioxid", "Stickstoff", "Helium"], correct: 1, level: "schwer" },
+        { question: "Welche Art von Atemmechanismus tritt bei schwerer Azidose auf?", answers: ["Kussmaul-Atmung", "Cheyne-Stokes-Atmung", "Biot-Atmung", "Schnappatmung"], correct: 0, level: "schwer" }
+    ];
+    let questions = [];
+    let used = [];
+    let correctCount = 0;
+    let askedCount = 0;
+
+    function startQuiz(selectedLevel) {
+      questions = allQuestions.filter(q => q.level === selectedLevel);
+      document.getElementById('level-auswahl').style.display = 'none';
+      document.getElementById('frage').style.display = 'block';
+      document.getElementById('antworten').style.display = 'flex';
+      showNext();
+    }
+
+    function getRandomIndex() {
+      if (used.length === questions.length) used = [];
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * questions.length);
+      } while (used.includes(idx));
+      used.push(idx);
+      return idx;
+    }
+
+    function showNext() {
+      if (askedCount >= questions.length) {
+        showResult();
+        return;
+      }
+      askedCount++;
+      const idx = getRandomIndex();
+      const q = questions[idx];
+      document.getElementById('frage').textContent = q.question;
+      const container = document.getElementById('antworten');
+      container.innerHTML = '';
+      q.answers.forEach((ans, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = ans;
+        btn.onclick = () => {
+          if (i === q.correct) {
+            btn.classList.add('correct');
+            correctCount++;
+          } else {
+            btn.classList.add('wrong');
+            setTimeout(() => {
+              Array.from(container.children)[q.correct].classList.add('correct');
+            }, 100);
+          }
+          setTimeout(showNext, 500);
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function showResult() {
+      document.getElementById('frage').style.display = 'none';
+      document.getElementById('antworten').style.display = 'none';
+      const percent = Math.round((correctCount / askedCount) * 100);
+      document.getElementById('ergebnis').textContent =
+        `Du hast ${correctCount} von ${askedCount} richtig (${percent}%)`;
+      document.getElementById('ergebnis').style.display = 'block';
+      document.getElementById('navigation').style.display = 'flex';
+    }
+
+    function restart() {
+      used = [];
+      correctCount = 0;
+      askedCount = 0;
+      document.getElementById('ergebnis').style.display = 'none';
+      document.getElementById('navigation').style.display = 'none';
+      startQuiz(questions[0].level); // Restart with the same level
+    }
+  </script>
+</body>
+</html>
